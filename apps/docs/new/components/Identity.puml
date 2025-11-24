@@ -1,0 +1,27 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+LAYOUT_LEFT_RIGHT()
+
+title C3 — Identity & Access Service (NestJS)
+
+Container_Boundary(identity, "Identity Service (NestJS)") {
+
+    Component(auth_module, "AuthModule", "NestJS Module", "Настраивает AuthController, AuthService, UserRepository.")
+    Component(auth_controller, "AuthController", "NestJS Controller", "Логин, refresh, user info (/auth).")
+    Component(auth_service, "AuthService", "NestJS Service", "Аутентификация, проверка пароля, выдача токенов.")
+    Component(user_repository, "UserRepository", "Repository", "Чтение/запись пользователей и ролей.")
+    Component(user_entity, "UserEntity", "Entity/Model", "Пользователь, роли, права.")
+    Component(token_service, "TokenService", "Provider", "Генерация JWT, валидация токенов.")
+}
+
+ContainerDb(identity_db, "Identity DB", "PostgreSQL", "Пользователи и права.")
+System_Ext(api_gateway, "API Gateway", "", "")
+
+Rel(api_gateway, auth_controller, "HTTP /auth/*", "JSON")
+Rel(auth_controller, auth_service, "Вызывает", "")
+Rel(auth_service, user_repository, "Чтение/запись пользователя", "ORM")
+Rel(user_repository, identity_db, "Чтение/запись", "SQL")
+Rel(auth_service, token_service, "Создание/проверка токенов", "")
+Rel(auth_service, user_entity, "Работа с моделью", "")
+
+@enduml
