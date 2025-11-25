@@ -8,6 +8,9 @@
 skinparam linetype ortho
 skinparam ArrowColor #444444
 skinparam ArrowThickness 1
+skinparam Ranksep 200
+skinparam edgesep 60
+skinparam splines ortho
 
 title C2 — Контейнеры экосистемы «Тёплый дом»
 

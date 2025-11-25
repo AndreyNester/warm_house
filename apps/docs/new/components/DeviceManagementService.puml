@@ -1,14 +1,17 @@
 @startuml
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
 skinparam linetype ortho
 skinparam nodesep 80
 skinparam ranksep 200
 skinparam ArrowFontSize 10
-skinparam ArrowColor #444444
+skinparam ArrowFontColor #444444
+skinparam ArrowTextAlignment center
 skinparam ComponentFontSize 11
 skinparam ComponentPadding 10
-skinparam DefaultTextAlignment center
-skinparam ArrowMessageAlignment center
+skinparam MaxMessageSize 30
+
+
 LAYOUT_LEFT_RIGHT()
 
 title C3 — Device Management Service (NestJS)
@@ -19,19 +22,19 @@ Container_Boundary(device_mgmt, "Device Management Service (NestJS)") {
     Component(device_service, "DeviceService", "NestJS Service", "Логика регистрации и управления устройствами.")
     Component(device_repository, "DeviceRepository", "ORM Repo", "Работа с устройствами в БД.")
     Component(device_entity, "DeviceEntity", "Entity", "Модель устройства.")
-    Component(device_events_publisher, "DeviceEventsPublisher", "Provider", "Публикует события device.*")
+    Component(device_events_publisher, "DeviceEventsPublisher", "Provider", "Публикует события device.* в брокер.")
 }
 
 ContainerDb(device_db, "Device DB", "PostgreSQL", "Реестр устройств.")
-System_Ext(message_broker, "Message Broker", "Kafka/RabbitMQ", "Обмен событиями.")
-System_Ext(api_gateway, "API Gateway", "Edge", "Маршрутизация клиентов.")
+System_Ext(message_broker, "Message Broker", "Kafka/RabbitMQ", "Событийная шина.")
+System_Ext(api_gateway, "API Gateway", "Edge", "Маршрутизация.")
 
-Rel(api_gateway, device_controller, "HTTP /devices/*", "JSON")
-Rel(device_controller, device_service, "Вызывает", "")
-Rel(device_service, device_repository, "Чтение/запись", "ORM")
-Rel(device_repository, device_db, "Чтение/запись", "SQL")
-Rel(device_service, device_entity, "Работа с моделью", "")
-Rel(device_service, device_events_publisher, "Публикация событий", "events")
-Rel(device_events_publisher, message_broker, "publish device.*", "events")
+Rel(api_gateway, device_controller, "HTTP запрос /devices", "JSON")
+Rel(device_controller, device_service, "Вызывает бизнес-логику", "")
+Rel(device_service, device_repository, "Чтение и запись устройств", "ORM")
+Rel(device_repository, device_db, "Чтение/запись данных", "SQL")
+Rel(device_service, device_entity, "Использует доменную модель", "")
+Rel(device_service, device_events_publisher, "Публикует доменные события", "")
+Rel(device_events_publisher, message_broker, "Отправляет события device.*", "events")
 
 @enduml

@@ -1,0 +1,39 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #444444
+skinparam ArrowTextAlignment center
+skinparam ComponentFontSize 11
+skinparam ComponentPadding 10
+skinparam MaxMessageSize 20
+skinparam ranksep 200
+
+LAYOUT_LEFT_RIGHT()
+
+title C3 — Home Management Service (NestJS)
+
+Container_Boundary(home_mgmt, "Home Management Service (NestJS)") {
+    Component(home_module, "HomeModule", "NestJS Module", "Конфигурация сервиса управления домами и помещениями.")
+    Component(home_controller, "HomeController", "NestJS Controller", "HTTP API /homes, /rooms и т.п.")
+    Component(home_service_comp, "HomeService", "NestJS Service", "Бизнес-логика по структуре дома, помещениям и зонам.")
+    Component(home_repository, "HomeRepository", "ORM Repo", "Чтение и запись данных о домах и помещениях.")
+    Component(home_entity, "HomeEntity", "Entity", "Дом, его параметры, владелец и контекст.")
+    Component(room_entity, "RoomEntity", "Entity", "Помещение/комната внутри дома.")
+    Component(zone_entity, "ZoneEntity", "Entity", "Логические зоны (например, группа комнат для отопления).")
+}
+
+ContainerDb(home_db, "Home DB", "PostgreSQL", "Дома, помещения, зоны и связи с устройствами.")
+System_Ext(api_gateway, "API Gateway", "Edge", "Маршрутизация запросов клиентов.")
+
+Rel(api_gateway, home_controller, "HTTP запрос /homes, /rooms", "JSON")
+Rel(home_controller, home_service_comp, "Вызывает бизнес-логику", "")
+Rel(home_service_comp, home_repository, "Чтение и запись данных", "ORM")
+Rel(home_repository, home_db, "Чтение/запись в БД", "SQL")
+Rel(home_service_comp, home_entity, "Использует доменную модель дома", "")
+Rel(home_service_comp, room_entity, "Использует доменную модель комнаты", "")
+Rel(home_service_comp, zone_entity, "Использует доменную модель зон", "")
+
+@enduml
