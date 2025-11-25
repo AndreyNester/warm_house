@@ -1,0 +1,59 @@
+@startuml
+skinparam linetype ortho
+
+title C4 Code — Telemetry Service (NestJS)
+
+class TelemetryQueryController {
+  +StringgetHistory(deviceId)
+  +getLatest(deviceId)
+}
+
+class TelemetryService {
+  +processTelemetry(dto)
+  +normalize(rawData)
+  +detectStatusChanges(...)
+  +publishDomainEvents(event)
+}
+
+class TelemetryRepository {
+  +save(record)
+  +findLatest(deviceId)
+  +findHistory(deviceId, range)
+}
+
+class TelemetryIngestor {
+  +handleMessage(rawTelemetry)
+}
+
+class TelemetryEventsPublisher {
+  +publishTemperatureUpdated(event)
+  +publishDeviceOnline(event)
+  +publishDeviceOffline(event)
+}
+
+class TelemetryRecordEntity {
+  -id
+  -deviceId
+  -metric
+  -value
+  -timestamp
+}
+
+class MessageBrokerAdapter {
+  +consume(topic)
+  +publish(topic, payload)
+}
+
+class TimeSeriesDatabase {
+  <<database>>
+}
+
+TelemetryQueryController --> TelemetryService : calls
+TelemetryService --> TelemetryRepository : reads/writes
+TelemetryRepository --> TimeSeriesDatabase : SQL/TSDB
+TelemetryIngestor --> TelemetryService : passes raw data
+TelemetryService --> TelemetryEventsPublisher : publishes events
+TelemetryEventsPublisher --> MessageBrokerAdapter : publish(topic)
+MessageBrokerAdapter --> TelemetryIngestor : consume(topic)
+TelemetryService --> TelemetryRecordEntity : creates/uses
+@enduml

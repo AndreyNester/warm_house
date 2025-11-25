@@ -1,0 +1,64 @@
+@startuml
+skinparam linetype ortho
+
+title C4 Code — Heating Service (NestJS)
+
+class HeatingController {
+  +setTargetTemperature(zoneId, value)
+  +setSchedule(zoneId, scheduleDto)
+  +getHeatingProfile(zoneId)
+}
+
+class HeatingService {
+  +updateTargetTemperature(zoneId, value)
+  +applySchedule(zoneId)
+  +handleTemperatureUpdate(event)
+  +shouldTurnOnHeating(event)
+  +shouldTurnOffHeating(event)
+}
+
+class HeatingRepository {
+  +saveProfile(profile)
+  +getProfile(zoneId)
+  +saveSchedule(zoneId, schedule)
+}
+
+class HeatingProfileEntity {
+  -zoneId
+  -targetTemperature
+  -currentState
+  -schedule
+}
+
+class TelemetryEventsHandler {
+  +handleTemperatureEvent(event)
+}
+
+class HeatingCommandDispatcher {
+  +sendHeatingOn(deviceId)
+  +sendHeatingOff(deviceId)
+  +sendValue(deviceId, value)
+}
+
+class DeviceCommandAdapter {
+  +dispatchCommand(deviceId, payload)
+}
+
+class MessageBrokerAdapter {
+  +consume(topic)
+  +publish(topic, payload)
+}
+
+class HeatingDatabase {
+  <<database>>
+}
+
+HeatingController --> HeatingService : calls
+HeatingService --> HeatingRepository : reads/writes profiles
+HeatingRepository --> HeatingDatabase : SQL
+TelemetryEventsHandler --> HeatingService : passes temperature events
+HeatingService --> HeatingCommandDispatcher : requests device actions
+HeatingCommandDispatcher --> DeviceCommandAdapter : send command
+HeatingService --> HeatingProfileEntity : uses domain model
+MessageBrokerAdapter --> TelemetryEventsHandler : consume telemetry.temperature.updated
+@enduml

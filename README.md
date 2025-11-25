@@ -169,15 +169,30 @@ temperature-api (опционально)
 
 **Диаграмма контейнеров (Containers)**
 
-Добавьте диаграмму.
+[Диаграмма контейнеров](./apps/docs/new/C4-containers.puml)
 
 **Диаграмма компонентов (Components)**
 
-Добавьте диаграмму для каждого из выделенных микросервисов.
+диаграммы для каждого из выделенных микросервисов.
+
+Здесь я сделал диаграммы только на Core микросервисы чтоб сохранить время (слева направо из диаграммы контейнеров выше)
+
+[Device management service](./apps/docs/new/components/DeviceManagementService.puml)
+[Identity service](./apps/docs/new/components/Identity.puml)
+[Telemetry service](./apps/docs/new/components/TelemetryService.puml)
+[Heating  service](./apps/docs/new/components/HeatingService.puml)
+[Home Management service](./apps/docs/new/components/HomeManagementService.puml)
+[Automation Scenarios service](./apps/docs/new/components/AutomationScenariosService.puml)
+[Lighting service](./apps/docs/new/components/LightingService.puml)
+[Surveillance service](./apps/docs/new/components/SurveillanceService.puml)
+[Gates service](./apps/docs/new/components/GatesService.puml)
 
 **Диаграмма кода (Code)**
 
-Добавьте одну диаграмму или несколько.
+Добавил для демонстранции диаграммы для Headting service и Telemetry service
+
+[Heating  service](./apps/docs/new/code/HeatingService.puml)
+[Telemetry service](./apps/docs/new/code/TelemetryService.puml)
 
 # Задание 3. Разработка ER-диаграммы
 
