@@ -88,4 +88,53 @@ export class HeatingService {
 
     return profile;
   }
+  
+   getRandomTemperature(location?: string, sensorId?: string) {
+    let loc = location || '';
+    let sid = sensorId || '';
+
+    // Если не передали location — берём по sensorId
+    if (!loc) {
+      switch (sid) {
+        case '1':
+          loc = 'Living Room';
+          break;
+        case '2':
+          loc = 'Bedroom';
+          break;
+        case '3':
+          loc = 'Kitchen';
+          break;
+        default:
+          loc = 'Unknown';
+      }
+    }
+
+    // Если не передали sensorId — берём по location
+    if (!sid) {
+      switch (loc) {
+        case 'Living Room':
+          sid = '1';
+          break;
+        case 'Bedroom':
+          sid = '2';
+          break;
+        case 'Kitchen':
+          sid = '3';
+          break;
+        default:
+          sid = '0';
+      }
+    }
+
+    const value = 18 + Math.random() * 10; // 18–28 °C
+
+    return {
+      sensorId: sid,
+      location: loc,
+      value: parseFloat(value.toFixed(1)),
+      unit: 'C',
+      timestamp: new Date().toISOString(),
+    };
+  }
 }

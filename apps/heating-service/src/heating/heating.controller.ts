@@ -6,8 +6,9 @@ import {
   Put,
   Post,
   Body,
+  Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { HeatingService } from './heating.service';
 import {
   HeatingProfileDto,
@@ -76,5 +77,40 @@ export class HeatingController {
     @Body() dto: CreateOverrideDto,
   ): HeatingProfileDto {
     return this.heatingService.createOverride(zoneId, dto);
+  }
+
+    @Get('temperature')
+  @ApiOperation({ summary: 'Получить случайное значение температуры (temperature-api)' })
+  @ApiQuery({ name: 'location', required: false, example: 'Living Room' })
+  @ApiQuery({ name: 'sensorId', required: false, example: '1' })
+  @ApiResponse({
+    status: 200,
+    schema: {
+      example: {
+        sensorId: '1',
+        location: 'Living Room',
+        value: 22.5,
+        unit: 'C',
+        timestamp: '2025-11-27T12:34:56.000Z',
+      },
+    },
+  })
+  getTemperature(
+    @Query('location') location?: string,
+    @Query('sensorId') sensorId?: string,
+  ) {
+    return this.heatingService.getRandomTemperature(location, sensorId);
+  }
+
+  @Get('temperature/health')
+  @ApiOperation({ summary: 'Проверка работоспособности temperature-api' })
+  @ApiResponse({
+    status: 200,
+    schema: {
+      example: { status: 'ok' },
+    },
+  })
+  health() {
+    return { status: 'ok' };
   }
 }
