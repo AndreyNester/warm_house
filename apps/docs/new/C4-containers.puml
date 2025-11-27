@@ -64,7 +64,6 @@ System_Boundary(td, "Экосистема «Тёплый дом» (To-Be)") {
     ContainerDb(billing_db, "Billing DB", "PostgreSQL", "Счета, платежи, начисления.")
     ContainerDb(inventory_db, "Inventory DB", "PostgreSQL", "Данные склада и логистики.")
     ContainerDb(automation_db, "Automation DB", "PostgreSQL", "Сценарии автоматизации.")
-
 }
 
 ' -------- Внешние системы --------
