@@ -154,6 +154,7 @@
   "unit": "C",
   "timestamp": "2025-11-27T12:34:56.000Z"
 }
+```
 
 **🔹 Health-check**
 
