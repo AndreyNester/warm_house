@@ -230,45 +230,64 @@ temperature-api (опционально)
 
 # Задание 5. Работа с docker и docker-compose
 
-Перейдите в apps.
+Сервис возвращает случайное значение температуры 18–28°C с логикой определения `location` и `sensorId`, согласно условиям задания.
 
-Там находится приложение-монолит для работы с датчиками температуры. В README.md описано как запустить решение.
+Пример ответа:
 
-Вам нужно:
+```json
+{
+  "sensorId": "1",
+  "location": "Living Room",
+  "value": 22.5,
+  "unit": "C",
+  "timestamp": "2025-11-27T12:34:56.000Z"
+}
 
-1. сделать простое приложение temperature-api на любом удобном для вас языке программирования, которое при запросе /temperature?location= будет отдавать рандомное значение температуры.
+**🔹 Health-check**
 
-Locations - название комнаты, sensorId - идентификатор названия комнаты
+- GET /heating/temperature/health
+
+**Dockerfile для temperature-api (NestJS)**
+
+apps/heating-service/Dockerfile
+
+
+**Dockerfile для Postgres**
+
+apps/postgres.Dockerfile
+
+**docker-compose.new.yml**
+
+apps/docker-compose.new.yml
+
+**Инструкция по запуску** 
+
+- Перейдите в директорию:
+```
+cd apps
 
 ```
-	// If no location is provided, use a default based on sensor ID
-	if location == "" {
-		switch sensorID {
-		case "1":
-			location = "Living Room"
-		case "2":
-			location = "Bedroom"
-		case "3":
-			location = "Kitchen"
-		default:
-			location = "Unknown"
-		}
-	}
 
-	// If no sensor ID is provided, generate one based on location
-	if sensorID == "" {
-		switch location {
-		case "Living Room":
-			sensorID = "1"
-		case "Bedroom":
-			sensorID = "2"
-		case "Kitchen":
-			sensorID = "3"
-		default:
-			sensorID = "0"
-		}
-	}
+- Запустите контейнеры:
 ```
+docker compose -f docker-compose.new.yml up --build -d
+
+```
+
+**После запуска сервисы доступны по адресам:**
+
+🔹 emperature API (NestJS)
+
+- Swagger: http://localhost:8081/api-docs
+
+- Значение температуры (рандомное при каждом запросе): http://localhost:8081/heating/temperature?location=Living%20Room
+
+🔹 Postgres
+
+База данных smart_home_db
+
+Инициализация — через smart_home/init.sql
+
 
 2. Приложение следует упаковать в Docker и добавить в docker-compose. Порт по умолчанию должен быть 8081
 
