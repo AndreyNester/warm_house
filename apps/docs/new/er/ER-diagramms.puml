@@ -1,0 +1,190 @@
+@startuml
+' ER-диаграмма экосистемы "Тёплый дом"
+hide circle
+skinparam linetype ortho
+
+' ---------- Identity ----------
+entity "User" as user {
+  * id : UUID
+  --
+  email : string
+  password_hash : string
+  full_name : string
+  status : string
+  created_at : datetime
+}
+
+entity "Role" as role {
+  * id : UUID
+  --
+  code : string
+  name : string
+}
+
+entity "UserRole" as user_role {
+  * user_id : UUID <<FK>>
+  * role_id : UUID <<FK>>
+}
+
+' ---------- Home / Structure ----------
+entity "House" as house {
+  * id : UUID
+  --
+  owner_id : UUID <<FK>>
+  name : string
+  address : string
+  timezone : string
+  status : string
+}
+
+entity "Room" as room {
+  * id : UUID
+  --
+  house_id : UUID <<FK>>
+  name : string
+  floor : int
+  area_m2 : numeric
+}
+
+entity "Zone" as zone {
+  * id : UUID
+  --
+  house_id : UUID <<FK>>
+  name : string
+  description : string
+}
+
+' ---------- Modules ----------
+entity "Module" as module {
+  * id : UUID
+  --
+  code : string
+  name : string
+  description : string
+}
+
+entity "HouseModule" as house_module {
+  * house_id : UUID <<FK>>
+  * module_id : UUID <<FK>>
+  --
+  status : string
+  activated_at : datetime
+  deactivated_at : datetime
+}
+
+' ---------- Devices ----------
+entity "DeviceType" as device_type {
+  * id : UUID
+  --
+  module_id : UUID <<FK>>
+  code : string
+  name : string
+  vendor : string
+  model : string
+  supports_telemetry : bool
+  supports_commands : bool
+}
+
+entity "Device" as device {
+  * id : UUID
+  --
+  device_type_id : UUID <<FK>>
+  house_id : UUID <<FK>>
+  room_id : UUID <<FK>>
+  zone_id : UUID <<FK>>
+  serial_number : string
+  name : string
+  status : string
+  last_seen_at : datetime
+}
+
+' ---------- Telemetry ----------
+entity "TelemetryRecord" as telemetry {
+  * id : UUID
+  --
+  device_id : UUID <<FK>>
+  metric : string
+  value_number : numeric
+  value_string : string
+  unit : string
+  recorded_at : datetime
+  status : string
+}
+
+' ---------- Automation ----------
+entity "AutomationRule" as rule {
+  * id : UUID
+  --
+  house_id : UUID <<FK>>
+  created_by_user_id : UUID <<FK>>
+  name : string
+  description : string
+  is_enabled : bool
+  trigger_type : string
+  condition_expression : text
+  action_payload : text
+  created_at : datetime
+}
+
+' ---------- Surveillance ----------
+entity "Camera" as camera {
+  * id : UUID
+  --
+  device_id : UUID <<FK>>
+  name : string
+  status : string
+}
+
+entity "Stream" as stream {
+  * id : UUID
+  --
+  camera_id : UUID <<FK>>
+  url : string
+  protocol : string
+  stream_type : string
+  is_primary : bool
+}
+
+entity "CameraAccess" as camera_access {
+  * id : UUID
+  --
+  user_id : UUID <<FK>>
+  camera_id : UUID <<FK>>
+  access_level : string
+  expires_at : datetime
+}
+
+' ---------- Relations ----------
+
+' Identity
+user ||--o{ house        : "owns"
+user ||--o{ user_role    : ""
+role ||--o{ user_role    : ""
+
+' Home
+house ||--o{ room        : ""
+house ||--o{ zone        : ""
+
+' Modules
+house ||--o{ house_module   : ""
+module ||--o{ house_module  : ""
+module ||--o{ device_type   : ""
+
+' Devices & Telemetry
+device_type ||--o{ device    : ""
+house ||--o{ device          : ""
+room  ||--o{ device          : ""
+zone  ||--o{ device          : ""
+device ||--o{ telemetry      : "generates"
+
+' Automation
+house ||--o{ rule            : ""
+user  ||--o{ rule            : "creates"
+
+' Surveillance
+device ||--o| camera         : "camera device"
+camera ||--o{ stream         : ""
+user   ||--o{ camera_access  : ""
+camera ||--o{ camera_access  : ""
+
+@enduml

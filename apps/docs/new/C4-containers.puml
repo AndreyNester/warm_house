@@ -1,0 +1,119 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+' Глобальный layout
+' LAYOUT_LEFT_RIGHT()
+
+' Попытка сделать линии ортогональными (сработает только если версия PlantUML поддерживает)
+skinparam linetype ortho
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam Ranksep 200
+skinparam edgesep 60
+skinparam splines ortho
+
+title C2 — Контейнеры экосистемы «Тёплый дом»
+
+Person(customer, "Клиент", "Житель дома. Управляет отоплением и умными устройствами.")
+Person(admin, "Администратор / Саппорт", "Поддержка пользователей, управление оборудованием.")
+Person(tech, "Техник-установщик", "Устанавливает и настраивает оборудование на объектах.")
+
+System_Boundary(td, "Экосистема «Тёплый дом» (To-Be)") {
+
+    ' -------- Клиентские приложения --------
+    Container_Boundary(frontend, "Клиентские приложения") {
+        Container(web, "Web-клиент", "SPA (например, React)", "Управление домом через браузер.")
+        Container(mobile, "Мобильное приложение", "iOS / Android", "Управление домом с телефона.")
+    }
+
+    ' -------- Edge / шлюз --------
+    Container(api_gateway, "API Gateway", "Reverse proxy / API Gateway", "Единая точка входа, авторизация и маршрутизация запросов.")
+
+    ' -------- Core микросервисы --------
+    Container_Boundary(core, "Core микросервисы умного дома") {
+
+        Container(identity, "Identity & Access Service", "Go микросервис", "Пользователи, роли, права доступа к домам и устройствам.")
+        Container(home_mgmt, "Home Management Service", "Go микросервис", "Дома, помещения, зоны, привязка устройств.")
+        Container(device_mgmt, "Device Management Service", "Go микросервис", "Реестр устройств, подключение и управление статусом.")
+        Container(telemetry, "Telemetry Service", "Go микросервис", "Приём и хранение телеметрии от датчиков и устройств.")
+        Container(heating, "Heating Service", "Go микросервис", "Управление отоплением, расписания, целевые температуры.")
+        Container(lighting, "Lighting Service", "Go микросервис", "Управление освещением в доме.")
+        Container(gates, "Gates Service", "Go микросервис", "Управление воротами и доступом.")
+        Container(surveillance, "Surveillance Service", "Go микросервис", "Управление видеонаблюдением и доступом к потокам.")
+        Container(automation, "Automation / Scenarios Service", "Go микросервис", "Пользовательские сценарии и автоматизация.")
+    }
+
+    ' -------- Биллинг и склад --------
+    Container_Boundary(business, "Биллинг и склад") {
+        Container(billing, "Billing Service", "Go микросервис", "Тарифы, начисления, счета клиентов.")
+        Container(payment_adapter, "Payment Adapter Service", "Go микросервис", "Интеграция с внешним платёжным шлюзом.")
+        Container(inventory, "Inventory & Logistics Service", "Go микросервис", "Учет оборудования, склад, резервирование.")
+    }
+
+    ' -------- Коммуникации и инфраструктура --------
+    Container(notifications, "Notification Service", "Go микросервис", "Отправка e-mail, SMS и push-уведомлений.")
+    Container(iot_gateway, "IoT Gateway / Protocol Adapter", "Сервис-шлюз", "Приём команд и телеметрии от устройств по различным протоколам (MQTT, HTTP и др.).")
+    Container(message_broker, "Message Broker", "Kafka / RabbitMQ", "Асинхронный обмен событиями между микросервисами.")
+    Container(monitoring, "Monitoring & Logging", "Prometheus / ELK и др.", "Мониторинг состояния системы и логирование.")
+
+    ' -------- Базы данных (основные) --------
+    ContainerDb(identity_db, "Identity DB", "PostgreSQL", "Пользователи, роли, права.")
+    ContainerDb(device_db, "Device DB", "PostgreSQL", "Реестр устройств и их параметры.")
+    ContainerDb(telemetry_db, "Telemetry DB", "Time-series DB / PostgreSQL", "История телеметрии.")
+    ContainerDb(heating_db, "Heating DB", "PostgreSQL", "Настройки отопления и расписания.")
+    ContainerDb(billing_db, "Billing DB", "PostgreSQL", "Счета, платежи, начисления.")
+    ContainerDb(inventory_db, "Inventory DB", "PostgreSQL", "Данные склада и логистики.")
+    ContainerDb(automation_db, "Automation DB", "PostgreSQL", "Сценарии автоматизации.")
+}
+
+' -------- Внешние системы --------
+System_Ext(payment_gateway, "Платёжный шлюз", "Внешняя платёжная система (СБП/карты и т.п.)")
+System_Ext(partner_clouds, "Партнёрские IoT-платформы", "Облака производителей устройств.")
+System_Ext(sms_email_provider, "Сервисы SMS/e-mail/push", "Внешние провайдеры коммуникаций.")
+
+' -------- Связи акторов с фронтом --------
+Rel(customer, web, "Использует через браузер", "HTTPS")
+Rel(customer, mobile, "Использует через мобильное приложение", "HTTPS")
+Rel(admin, web, "Администрирование и поддержка", "HTTPS")
+Rel(tech, web, "Работа с заявками и оборудованием", "HTTPS")
+
+' -------- Связи фронта с API Gateway --------
+Rel(web, api_gateway, "HTTP REST/JSON", "HTTPS")
+Rel(mobile, api_gateway, "HTTP REST/JSON", "HTTPS")
+
+' -------- Связи API Gateway с микросервисами --------
+Rel(api_gateway, identity, "Проксирование запросов аутентификации и авторизации", "HTTP")
+Rel(api_gateway, home_mgmt, "Запросы по домам и помещениям", "HTTP")
+Rel(api_gateway, device_mgmt, "Управление устройствами", "HTTP")
+Rel(api_gateway, heating, "Управление отоплением", "HTTP")
+Rel(api_gateway, lighting, "Управление освещением", "HTTP")
+Rel(api_gateway, gates, "Управление воротами", "HTTP")
+Rel(api_gateway, surveillance, "Доступ к настройкам видеонаблюдения", "HTTP")
+Rel(api_gateway, automation, "Управление сценариями", "HTTP")
+Rel(api_gateway, billing, "Просмотр счетов и оплат", "HTTP")
+
+' -------- Взаимодействия микросервисов и брокера --------
+Rel(iot_gateway, message_broker, "Публикация телеметрии и событий устройств", "events")
+Rel(telemetry, message_broker, "Публикация событий изменения параметров", "events")
+Rel(heating, message_broker, "Подписка на телеметрию и события", "events")
+Rel(lighting, message_broker, "Подписка на события (например, сценарии)", "events")
+Rel(automation, message_broker, "Публикация и подписка на события домена", "events")
+Rel(billing, message_broker, "Публикация событий платежей/начислений", "events")
+Rel(notifications, message_broker, "Подписка на события для отправки уведомлений", "events")
+
+' -------- Взаимодействия микросервисов с БД --------
+Rel(identity, identity_db, "Чтение / запись", "SQL")
+Rel(device_mgmt, device_db, "Чтение / запись", "SQL")
+Rel(telemetry, telemetry_db, "Запись телеметрии, чтение истории", "SQL")
+Rel(heating, heating_db, "Чтение / запись настроек", "SQL")
+Rel(billing, billing_db, "Чтение / запись счетов и операций", "SQL")
+Rel(inventory, inventory_db, "Чтение / запись данных склада", "SQL")
+Rel(automation, automation_db, "Чтение / запись сценариев", "SQL")
+
+' -------- Внешние интеграции --------
+Rel(payment_adapter, payment_gateway, "Интеграция по API", "HTTPS")
+Rel(billing, payment_adapter, "Создание платёжных запросов", "HTTP")
+Rel(notifications, sms_email_provider, "Отправка уведомлений", "HTTPS/API")
+Rel(iot_gateway, partner_clouds, "Интеграция с облаками партнёров", "HTTPS/MQTT")
+
+@enduml

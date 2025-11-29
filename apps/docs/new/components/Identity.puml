@@ -1,0 +1,37 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 200
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #444444
+skinparam ArrowTextAlignment center
+skinparam ComponentFontSize 11
+skinparam ComponentPadding 10
+skinparam MaxMessageSize 20
+
+LAYOUT_LEFT_RIGHT()
+
+title C3 — Identity & Access Service (NestJS)
+
+Container_Boundary(identity, "Identity Service (NestJS)") {
+    Component(auth_module, "AuthModule", "NestJS Module", "Конфигурация auth-компонентов.")
+    Component(auth_controller, "AuthController", "NestJS Controller", "HTTP API /auth.")
+    Component(auth_service, "AuthService", "NestJS Service", "Аутентификация и выдача токенов.")
+    Component(user_repository, "UserRepository", "ORM Repo", "Работа с пользователями и ролями.")
+    Component(user_entity, "UserEntity", "Entity", "Пользователь, роли, права.")
+    Component(token_service, "TokenService", "Provider", "Генерация и проверка JWT.")
+}
+
+ContainerDb(identity_db, "Identity DB", "PostgreSQL", "Пользователи и права.")
+System_Ext(api_gateway, "API Gateway", "Edge", "Маршрутизация запросов.")
+
+Rel(api_gateway, auth_controller, "HTTP запрос /auth", "JSON")
+Rel(auth_controller, auth_service, "Вызывает бизнес-логику", "")
+Rel(auth_service, user_repository, "Чтение/запись пользователей", "ORM")
+Rel(user_repository, identity_db, "Чтение/запись данных", "SQL")
+Rel(auth_service, token_service, "Генерация и проверка токенов", "")
+Rel(auth_service, user_entity, "Использует доменную модель", "")
+
+@enduml

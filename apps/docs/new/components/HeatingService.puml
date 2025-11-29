@@ -1,0 +1,45 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #444444
+skinparam ArrowTextAlignment center
+skinparam ComponentFontSize 11
+skinparam ComponentPadding 10
+skinparam MaxMessageSize 20
+skinparam ranksep 200
+
+
+LAYOUT_LEFT_RIGHT()
+
+title C3 — Heating Service (NestJS)
+
+Container_Boundary(heating, "Heating Service (NestJS)") {
+    Component(heating_module, "HeatingModule", "NestJS Module", "Конфигурация сервиса отопления.")
+    Component(heating_controller, "HeatingController", "NestJS Controller", "HTTP API /heating.")
+    Component(heating_service_comp, "HeatingService", "NestJS Service", "Бизнес-логика профилей отопления и расписаний.")
+    Component(heating_repository, "HeatingRepository", "ORM Repo", "Работа с настройками и профилями отопления.")
+    Component(heating_entity, "HeatingProfileEntity", "Entity", "Профиль/зона отопления и расписание.")
+    Component(heating_events_handler, "TelemetryEventsHandler", "Consumer", "Реагирует на события telemetry.temperature.updated.")
+    Component(heating_command_dispatcher, "HeatingCommandDispatcher", "Provider", "Формирует и отправляет команды устройствам отопления.")
+}
+
+ContainerDb(heating_db, "Heating DB", "PostgreSQL", "Настройки и профили отопления.")
+System_Ext(message_broker, "Message Broker", "Kafka/RabbitMQ", "")
+System_Ext(api_gateway, "API Gateway", "Edge", "")
+System_Ext(device_cmd_adapter, "DeviceCommandAdapter", "Отправка команд устройствам", "")
+
+Rel(api_gateway, heating_controller, "HTTP запрос /heating", "JSON")
+Rel(heating_controller, heating_service_comp, "Вызывает бизнес-логику", "")
+Rel(heating_service_comp, heating_repository, "Чтение и запись настроек", "ORM")
+Rel(heating_repository, heating_db, "Чтение/запись данных", "SQL")
+Rel(heating_service_comp, heating_entity, "Использует доменную модель", "")
+
+Rel(message_broker, heating_events_handler, "Потребляет события телеметрии", "events")
+Rel(heating_events_handler, heating_service_comp, "Передаёт изменения температуры", "")
+Rel(heating_service_comp, heating_command_dispatcher, "Запрашивает отправку команд", "")
+Rel(heating_command_dispatcher, device_cmd_adapter, "Отправляет команды устройствам", "HTTP/events")
+
+@enduml

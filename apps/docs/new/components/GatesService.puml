@@ -1,0 +1,35 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #444444
+skinparam ArrowTextAlignment center
+skinparam ComponentFontSize 11
+skinparam ComponentPadding 10
+skinparam MaxMessageSize 20
+skinparam ranksep 200
+
+LAYOUT_LEFT_RIGHT()
+
+title C3 — Gates Service (NestJS)
+
+Container_Boundary(gates, "Gates Service (NestJS)") {
+    Component(gates_module, "GatesModule", "NestJS Module", "Конфигурация сервиса управления воротами.")
+    Component(gates_controller, "GatesController", "NestJS Controller", "HTTP API /gates (открыть, закрыть, проверить состояние).")
+    Component(gates_service_comp, "GatesService", "NestJS Service", "Бизнес-логика команд к воротам и проверка состояний.")
+    Component(gates_domain_model, "GatesDomainModel", "Model", "Модель ворот и допустимых операций (открыть/закрыть).")
+    Component(gates_command_adapter, "GatesCommandAdapter", "Provider", "Отправка команд на контроллер ворот (через общий Device Command Adapter или напрямую).")
+}
+
+System_Ext(api_gateway, "API Gateway", "Edge", "Маршрутизация запросов клиентов.")
+System_Ext(device_cmd_adapter, "DeviceCommandAdapter", "Сервис/шлюз устройств", "Принимает команды на низком уровне и общается с контроллерами ворот.")
+
+Rel(api_gateway, gates_controller, "HTTP запрос /gates", "JSON")
+Rel(gates_controller, gates_service_comp, "Вызывает бизнес-логику", "")
+Rel(gates_service_comp, gates_domain_model, "Использует доменную модель ворот", "")
+Rel(gates_service_comp, gates_command_adapter, "Формирует команду для ворот", "")
+Rel(gates_command_adapter, device_cmd_adapter, "Передаёт команду на исполнение", "HTTP/events")
+
+@enduml

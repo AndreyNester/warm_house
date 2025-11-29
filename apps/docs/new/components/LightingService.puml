@@ -1,0 +1,40 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #444444
+skinparam ArrowTextAlignment center
+skinparam ComponentFontSize 11
+skinparam ComponentPadding 10
+skinparam MaxMessageSize 20
+skinparam ranksep 200
+
+LAYOUT_LEFT_RIGHT()
+
+title C3 — Lighting Service (NestJS)
+
+Container_Boundary(lighting, "Lighting Service (NestJS)") {
+    Component(lighting_module, "LightingModule", "NestJS Module", "Основной модуль освещения.")
+    Component(lighting_controller, "LightingController", "NestJS Controller", "HTTP API /lighting.")
+    Component(lighting_service_comp, "LightingService", "NestJS Service", "Бизнес-логика управления светом и группами.")
+    Component(lighting_domain_model, "LightingDomainModel", "Model", "Группы освещения, линии, логика сцен.")
+    Component(lighting_events_handler, "AutomationEventsHandler", "Consumer", "Реагирует на события automation.lighting.*.")
+    Component(lighting_command_dispatcher, "LightingCommandDispatcher", "Provider", "Формирует команды для устройств освещения.")
+}
+
+System_Ext(message_broker, "Message Broker", "Kafka/RabbitMQ", "")
+System_Ext(api_gateway, "API Gateway", "Edge", "")
+System_Ext(device_cmd_adapter, "DeviceCommandAdapter", "Реле и контроллеры освещения", "")
+
+Rel(api_gateway, lighting_controller, "HTTP запрос /lighting", "JSON")
+Rel(lighting_controller, lighting_service_comp, "Вызывает бизнес-логику", "")
+Rel(lighting_service_comp, lighting_domain_model, "Использует доменную модель", "")
+
+Rel(message_broker, lighting_events_handler, "Потребляет события автоматизации", "events")
+Rel(lighting_events_handler, lighting_service_comp, "Передаёт триггеры сценариев", "")
+Rel(lighting_service_comp, lighting_command_dispatcher, "Запрашивает отправку команд", "")
+Rel(lighting_command_dispatcher, device_cmd_adapter, "Отправляет команды устройствам света", "HTTP/events")
+
+@enduml

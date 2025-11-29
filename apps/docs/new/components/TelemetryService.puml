@@ -1,0 +1,44 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #444444
+skinparam ArrowTextAlignment center
+skinparam ComponentFontSize 11
+skinparam ComponentPadding 10
+skinparam MaxMessageSize 20
+skinparam ranksep 200
+
+
+LAYOUT_LEFT_RIGHT()
+
+title C3 — Telemetry Service (NestJS)
+
+Container_Boundary(telemetry, "Telemetry Service (NestJS)") {
+    Component(telemetry_module, "TelemetryModule", "NestJS Module", "Конфигурация сервиса телеметрии.")
+    Component(telemetry_ingestor, "TelemetryIngestor", "Provider (Consumer)", "Получает сырую телеметрию из брокера.")
+    Component(telemetry_service, "TelemetryService", "NestJS Service", "Обработка, валидация и нормализация телеметрии.")
+    Component(telemetry_repository, "TelemetryRepository", "ORM Repo", "Запись и чтение телеметрии.")
+    Component(telemetry_entity, "TelemetryRecordEntity", "Entity", "Запись измерения.")
+    Component(telemetry_events_publisher, "TelemetryEventsPublisher", "Provider", "Публикует события telemetry.* для других сервисов.")
+    Component(telemetry_query_controller, "TelemetryQueryController", "NestJS Controller", "HTTP API для запросов истории и текущих значений.")
+}
+
+ContainerDb(telemetry_db, "Telemetry DB", "PostgreSQL/TSDB", "История телеметрии.")
+System_Ext(message_broker, "Message Broker", "Kafka/RabbitMQ", "Телеметрия и события.")
+System_Ext(api_gateway, "API Gateway", "Edge", "")
+
+Rel(message_broker, telemetry_ingestor, "Потребляет сырую телеметрию", "events")
+Rel(telemetry_ingestor, telemetry_service, "Передаёт данные на обработку", "")
+Rel(telemetry_service, telemetry_repository, "Запись измерений", "ORM")
+Rel(telemetry_repository, telemetry_db, "Чтение/запись данных", "SQL")
+Rel(telemetry_service, telemetry_entity, "Использует доменную модель", "")
+Rel(telemetry_service, telemetry_events_publisher, "Формирует доменные события", "")
+Rel(telemetry_events_publisher, message_broker, "Публикует события telemetry.*", "events")
+
+Rel(api_gateway, telemetry_query_controller, "HTTP запрос /telemetry", "JSON")
+Rel(telemetry_query_controller, telemetry_repository, "Читает данные для клиента", "ORM")
+
+@enduml

@@ -1,0 +1,44 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #444444
+skinparam ArrowTextAlignment center
+skinparam ComponentFontSize 11
+skinparam ComponentPadding 10
+skinparam MaxMessageSize 20
+skinparam ranksep 200
+
+LAYOUT_LEFT_RIGHT()
+
+title C3 — Automation / Scenarios Service (NestJS)
+
+Container_Boundary(automation, "Automation Service (NestJS)") {
+    Component(automation_module, "AutomationModule", "NestJS Module", "Конфигурация подсистемы сценариев.")
+    Component(automation_controller, "AutomationController", "NestJS Controller", "HTTP CRUD API /automation.")
+    Component(automation_service_comp, "AutomationService", "NestJS Service", "Создание, изменение и валидация сценариев.")
+    Component(automation_repository, "AutomationRepository", "ORM Repo", "Хранение сценариев и метаданных.")
+    Component(automation_entity, "AutomationRuleEntity", "Entity", "Сценарий: триггеры, условия, действия.")
+    Component(rules_engine, "RulesEngine", "Provider", "Исполняет правила при наступлении событий.")
+    Component(automation_events_handler, "EventsHandler", "Consumer", "Подписчик на события telemetry.*, device.*, billing.*.")
+    Component(automation_events_publisher, "AutomationEventsPublisher", "Provider", "Публикует события automation.* для других сервисов.")
+}
+
+ContainerDb(automation_db, "Automation DB", "PostgreSQL", "Сценарии автоматизации.")
+System_Ext(message_broker, "Message Broker", "Kafka/RabbitMQ", "")
+System_Ext(api_gateway, "API Gateway", "Edge", "")
+
+Rel(api_gateway, automation_controller, "HTTP запрос /automation", "JSON")
+Rel(automation_controller, automation_service_comp, "Вызывает бизнес-логику", "")
+Rel(automation_service_comp, automation_repository, "Чтение и запись сценариев", "ORM")
+Rel(automation_repository, automation_db, "Чтение/запись данных", "SQL")
+Rel(automation_service_comp, automation_entity, "Использует доменную модель", "")
+
+Rel(message_broker, automation_events_handler, "Потребляет доменные события", "events")
+Rel(automation_events_handler, rules_engine, "Передаёт события в движок правил", "")
+Rel(rules_engine, automation_events_publisher, "Создаёт команды и события", "")
+Rel(automation_events_publisher, message_broker, "Публикует события automation.*", "events")
+
+@enduml

@@ -12,7 +12,19 @@ import (
 	"smarthome/services"
 
 	"github.com/gin-gonic/gin"
+	"time"
+	"math/rand"
+	"math"
 )
+
+func init() {
+    rand.Seed(time.Now().UnixNano())
+}
+
+func randomTemp() float64 {
+    v := rand.Float64() * 30 // 0..30
+    return math.Round(v*100) / 100
+}
 
 // SensorHandler handles sensor-related requests
 type SensorHandler struct {
@@ -52,19 +64,29 @@ func (h *SensorHandler) GetSensors(c *gin.Context) {
 
 	// Update temperature sensors with real-time data from the external API
 	for i, sensor := range sensors {
-		if sensor.Type == models.Temperature {
-			tempData, err := h.TemperatureService.GetTemperatureByID(fmt.Sprintf("%d", sensor.ID))
-			if err == nil {
-				// Update sensor with real-time data
-				sensors[i].Value = tempData.Value
-				sensors[i].Status = tempData.Status
-				sensors[i].LastUpdated = tempData.Timestamp
-				log.Printf("Updated temperature data for sensor %d from external API", sensor.ID)
-			} else {
-				log.Printf("Failed to fetch temperature data for sensor %d: %v", sensor.ID, err)
-			}
-		}
-	}
+    if sensor.Type == models.Temperature {
+        tempData, err := h.TemperatureService.GetTemperatureByID(fmt.Sprintf("%d", sensor.ID))
+        if err != nil {
+            log.Printf("Failed to fetch temperature data for sensor %d: %v", sensor.ID, err)
+        }
+
+        // Всегда ставим рандомное значение 0..30,
+        // независимо от того, что вернул внешний сервис
+        sensors[i].Value = randomTemp()
+
+        // Остальные поля можно взять из внешнего сервиса, если он ответил
+        if err == nil && tempData != nil {
+            sensors[i].Status = tempData.Status
+            sensors[i].LastUpdated = tempData.Timestamp
+        } else {
+            // fallback, если API не ответило
+            sensors[i].Status = "inactive"
+            sensors[i].LastUpdated = time.Now().UTC()
+        }
+
+        log.Printf("Updated temperature data for sensor %d (random value)", sensor.ID)
+    }
+}
 
 	c.JSON(http.StatusOK, sensors)
 }
@@ -85,17 +107,23 @@ func (h *SensorHandler) GetSensorByID(c *gin.Context) {
 
 	// If this is a temperature sensor, fetch real-time data from the temperature API
 	if sensor.Type == models.Temperature {
-		tempData, err := h.TemperatureService.GetTemperatureByID(fmt.Sprintf("%d", sensor.ID))
-		if err == nil {
-			// Update sensor with real-time data
-			sensor.Value = tempData.Value
-			sensor.Status = tempData.Status
-			sensor.LastUpdated = tempData.Timestamp
-			log.Printf("Updated temperature data for sensor %d from external API", sensor.ID)
-		} else {
-			log.Printf("Failed to fetch temperature data for sensor %d: %v", sensor.ID, err)
-		}
-	}
+    tempData, err := h.TemperatureService.GetTemperatureByID(fmt.Sprintf("%d", sensor.ID))
+    if err != nil {
+        log.Printf("Failed to fetch temperature data for sensor %d: %v", sensor.ID, err)
+    }
+
+    sensor.Value = randomTemp()
+
+    if err == nil && tempData != nil {
+        sensor.Status = tempData.Status
+        sensor.LastUpdated = tempData.Timestamp
+    } else {
+        sensor.Status = "inactive"
+        sensor.LastUpdated = time.Now().UTC()
+    }
+
+    log.Printf("Updated temperature data for sensor %d (random value)", sensor.ID)
+}
 
 	c.JSON(http.StatusOK, sensor)
 }
@@ -120,7 +148,7 @@ func (h *SensorHandler) GetTemperatureByLocation(c *gin.Context) {
 	// Return the temperature data
 	c.JSON(http.StatusOK, gin.H{
 		"location":    tempData.Location,
-		"value":       tempData.Value,
+		"value":       randomTemp(),
 		"unit":        tempData.Unit,
 		"status":      tempData.Status,
 		"timestamp":   tempData.Timestamp,
@@ -130,20 +158,25 @@ func (h *SensorHandler) GetTemperatureByLocation(c *gin.Context) {
 
 // CreateSensor handles POST /api/v1/sensors
 func (h *SensorHandler) CreateSensor(c *gin.Context) {
-	var sensorCreate models.SensorCreate
-	if err := c.ShouldBindJSON(&sensorCreate); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+    var sensorCreate models.SensorCreate
+    if err := c.ShouldBindJSON(&sensorCreate); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	sensor, err := h.DB.CreateSensor(context.Background(), sensorCreate)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+    sensor, err := h.DB.CreateSensor(context.Background(), sensorCreate)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
 
-	c.JSON(http.StatusCreated, sensor)
+    if sensor.Type == models.Temperature {
+        sensor.Value = randomTemp()
+    }
+
+    c.JSON(http.StatusCreated, sensor)
 }
+
 
 // UpdateSensor handles PUT /api/v1/sensors/:id
 func (h *SensorHandler) UpdateSensor(c *gin.Context) {

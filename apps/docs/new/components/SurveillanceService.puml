@@ -1,0 +1,44 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 120
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #444444
+skinparam ArrowTextAlignment center
+skinparam ComponentFontSize 11
+skinparam ComponentPadding 10
+skinparam MaxMessageSize 20
+skinparam ranksep 200
+
+LAYOUT_LEFT_RIGHT()
+
+title C3 — Surveillance Service (NestJS)
+
+Container_Boundary(surveillance, "Surveillance Service (NestJS)") {
+    Component(surv_module, "SurveillanceModule", "NestJS Module", "Конфигурация сервиса видеонаблюдения.")
+    Component(surv_controller, "SurveillanceController", "NestJS Controller", "HTTP API /surveillance (камеры, доступы, ссылки).")
+    Component(surv_service_comp, "SurveillanceService", "NestJS Service", "Бизнес-логика управления камерами и доступами к видео.")
+    Component(surv_repository, "SurveillanceRepository", "ORM Repo", "Хранение настроек и метаданных камер.")
+    Component(camera_entity, "CameraEntity", "Entity", "Камера, её параметры, привязка к дому и комнате.")
+    Component(stream_entity, "StreamEntity", "Entity", "Информация о видеопотоке: URL, протокол, тип потока.")
+    Component(access_entity, "CameraAccessEntity", "Entity", "Права доступа пользователя к камерам и потокам.")
+    Component(camera_integration, "CameraIntegrationClient", "Provider", "Интеграция с NVR/облаком камер (RTSP/WebRTC/внешний API).")
+}
+
+ContainerDb(surv_db, "Surveillance DB", "PostgreSQL", "Метаданные камер и права доступа.")
+System_Ext(api_gateway, "API Gateway", "Edge", "Маршрутизация запросов.")
+System_Ext(camera_cloud, "Camera / NVR / Cloud", "RTSP/WebRTC/API", "Реальные видеопотоки и внешние облака камер.")
+
+Rel(api_gateway, surv_controller, "HTTP запрос /surveillance", "JSON")
+Rel(surv_controller, surv_service_comp, "Вызывает бизнес-логику", "")
+Rel(surv_service_comp, surv_repository, "Чтение и запись метаданных", "ORM")
+Rel(surv_repository, surv_db, "Чтение/запись данных", "SQL")
+Rel(surv_service_comp, camera_entity, "Использует модель камеры", "")
+Rel(surv_service_comp, stream_entity, "Использует модель потока", "")
+Rel(surv_service_comp, access_entity, "Использует модель прав доступа", "")
+Rel(surv_service_comp, camera_integration, "Запрашивает данные и токены у внешних систем", "")
+Rel(camera_integration, camera_cloud, "Вызывает внешние API и потоки", "RTSP/WebRTC/HTTPS")
+
+@enduml
